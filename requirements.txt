@@ -3,3 +3,4 @@ Pillow
 PyPDF2
 gunicorn
 python-docx
+pycryptodome
