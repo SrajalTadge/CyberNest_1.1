@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CyberNest - Digital Forensics</title>
+    <style>
+        body {
+            background: #121212;
+            color: tomato;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: tomato;
+        }
+
+        .tool-card {
+            background: #1e1e1e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 0 15px tomato;
+            border: 2px solid tomato;
+        }
+
+        input[type="file"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        button, .copy-btn {
+            background: tomato;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+
+        .output-box {
+            background: #292929;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            white-space: pre-wrap;
+            color: white;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .decoded-text-box {
+            white-space: pre-line;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            color: white;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+
+        .filename-display {
+            font-size: 0.9rem;
+            color: #ffb3a7;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .error-box {
+            color: red;
+            background: #2a0000;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .encoded-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .encoded-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border: 2px solid tomato;
+            border-radius: 10px;
+        }
+
+        .encoded-preview a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: tomato;
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+        }
+
+        .encoded-preview a:hover {
+            background: black;
+            color: tomato;
+            border: 1px solid tomato;
+        }
+    </style>
+</head>
+<body>
+
+<div style="padding: 1rem;">
+    <a href="/" style="color:white;font-weight:bold;text-decoration:none;">⬅️ Back to Home</a>
+</div>
+
+<h1>Digital Forensics Tools</h1>
+
+<!-- 🧬 Image Steganography -->
+<div class="tool-card">
+    <h2>Image Steganography</h2>
+
+    <!-- Encode -->
+    <h3>Encode Message into Image</h3>
+    <form method="POST" action="/tools/stego/encode" enctype="multipart/form-data">
+        <input type="file" name="image" required onchange="showFileName(this)">
+        <span class="filename-display"></span>
+        <textarea name="message" rows="3" placeholder="Enter secret message..." required></textarea>
+        <div class="btn-group">
+            <button type="submit">Encode</button>
+            <button type="button" onclick="clearOutput('stego-box')">Clear</button>
+        </div>
+    </form>
+
+    {% if encoded_image %}
+    <div id="stego-box" class="output-box encoded-preview">
+        <p>✅ Message encoded successfully in image.</p>
+        <a href="/uploads/{{ encoded_image }}" download>⬇️ Download Encoded Image</a><br>
+        <img src="/uploads/{{ encoded_image }}" alt="Encoded Image Preview">
+    </div>
+    {% endif %}
+
+    <!-- Decode -->
+    <h3 style="margin-top: 40px;">Decode Message from Image</h3>
+    <form method="POST" action="/tools/stego/decode" enctype="multipart/form-data">
+        <input type="file" name="image" required onchange="showFileName(this)">
+        <span class="filename-display"></span>
+        <div class="btn-group">
+            <button type="submit">Decode</button>
+            <button type="button" onclick="clearOutput('decode-box')">Clear</button>
+        </div>
+    </form>
+
+    {% if stego_result %}
+    <div id="decode-box" class="output-box stego-decode-output">
+        <p class="decode-success">✅ Decoded Message:</p>
+        <pre id="hiddenMsg" class="decoded-text-box">{{ stego_result }}</pre>
+        <button type="button" class="copy-btn" onclick="copyOutput('hiddenMsg')">📋 Copy Message</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 🔐 File Hash Generator -->
+<div class="tool-card">
+    <h2>File Hash Generator</h2>
+    <form method="POST" action="/forensics/hash" enctype="multipart/form-data">
+        <input type="file" name="file" required onchange="showFileName(this)">
+        <span class="filename-display"></span>
+        <div class="btn-group">
+            <button type="submit">Generate Hashes</button>
+            <button type="button" onclick="copyOutput('hash-box')">Copy</button>
+            <button type="button" onclick="clearOutput('hash-box')">Clear</button>
+        </div>
+    </form>
+    {% if hash_result %}
+    <div id="hash-box" class="output-box">
+        <strong>MD5:</strong> {{ hash_result.md5 }}<br>
+        <strong>SHA1:</strong> {{ hash_result.sha1 }}<br>
+        <strong>SHA256:</strong> {{ hash_result.sha256 }}
+    </div>
+    {% endif %}
+    {% if error and error.hash %}
+    <div class="error-box">{{ error.hash }}</div>
+    {% endif %}
+</div>
+
+<!-- 🖼️ EXIF Metadata Extractor -->
+<div class="tool-card">
+    <h2>EXIF Metadata Extractor</h2>
+    <form method="POST" action="/tools/exif" enctype="multipart/form-data">
+        <input type="file" name="image" required onchange="showFileName(this)">
+        <span class="filename-display"></span>
+        <div class="btn-group">
+            <button type="submit">Extract Metadata</button>
+            <button type="button" onclick="copyOutput('exifDataOnly')">Copy</button>
+            <button type="button" onclick="clearOutput('exif-box')">Clear</button>
+        </div>
+    </form>
+    {% if exif_data %}
+    <div id="exif-box" class="output-box">
+        <div style="font-weight: bold; margin-bottom: 5px;">EXIF Metadata:</div>
+        <pre id="exifDataOnly" style="margin: 0;">{{ exif_data }}</pre>
+    </div>
+    {% endif %}
+    {% if error and error.exif %}
+    <div class="error-box">{{ error.exif }}</div>
+    {% endif %}
+</div>
+
+<!-- 🧠 Chatbot Include -->
+{% include 'chatbot.html' %}
+
+<script>
+function copyOutput(boxId) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    const temp = document.createElement('textarea');
+    temp.value = box.value || box.innerText;
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand('copy');
+    document.body.removeChild(temp);
+    alert("Copied to clipboard!");
+}
+
+function clearOutput(boxId) {
+    const box = document.getElementById(boxId);
+    if (box) box.value ? box.value = '' : box.innerHTML = '';
+}
+
+function showFileName(input) {
+    const span = input.nextElementSibling;
+    if (input.files.length > 0) {
+        span.innerText = input.files[0].name;
+    } else {
+        span.innerText = '';
+    }
+}
+</script>
+
+</body>
+</html>
